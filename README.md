@@ -21,6 +21,18 @@ A terminal UI for managing Proxmox VE, built with [Ink](https://github.com/vadim
 
 ## Installation
 
+### From npm (recommended)
+
+```bash
+# Install globally
+bun install -g proxmux
+
+# Run
+proxmux
+```
+
+### From source
+
 ```bash
 # Clone the repository
 git clone https://github.com/roshie548/proxmux.git
