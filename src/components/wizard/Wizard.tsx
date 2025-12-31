@@ -47,6 +47,8 @@ export function Wizard({
   }, []);
 
   const goNext = useCallback(async () => {
+    if (!step) return;
+
     // Validate current step
     if (step.validate) {
       const result = step.validate();
@@ -101,6 +103,10 @@ export function Wizard({
     { isActive: !isSubmitting }
   );
 
+  if (!step) {
+    return <Text color="red">Error: Invalid step</Text>;
+  }
+
   const StepComponent = step.component;
 
   return (
@@ -139,9 +145,11 @@ export function Wizard({
         padding={1}
         marginBottom={1}
       >
-        <Text bold marginBottom={1}>
-          Step {currentStep + 1}: {step.title}
-        </Text>
+        <Box marginBottom={1}>
+          <Text bold>
+            Step {currentStep + 1}: {step.title}
+          </Text>
+        </Box>
         <StepComponent
           isActive={!isSubmitting}
           onFieldChange={handleFieldChange}

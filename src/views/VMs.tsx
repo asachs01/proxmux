@@ -5,12 +5,14 @@ import { useKeyboardNavigation } from "../hooks/useKeyboard.ts";
 import { Spinner } from "../components/common/Spinner.tsx";
 import { StatusBadge } from "../components/common/StatusBadge.tsx";
 import { DetailView } from "../components/DetailView.tsx";
+import { CreateVM } from "./CreateVM.tsx";
 import { formatBytes, formatUptime, truncate } from "../utils/format.ts";
 import type { VM } from "../api/types.ts";
 
 type PendingAction = { type: "stop" | "reboot"; vmid: number; node: string; name: string } | null;
 
 export function VMs() {
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
   const { vms: unsortedVMs, loading, error, refresh, startVM, stopVM, rebootVM } = useVMs();
 
   // Sort VMs by ID
@@ -22,12 +24,18 @@ export function VMs() {
 
   const { selectedIndex } = useKeyboardNavigation({
     itemCount: vms.length,
-    enabled: !actionLoading && !pendingAction && !selectedVM,
+    enabled: !actionLoading && !pendingAction && !selectedVM && !showCreateWizard,
   });
 
   useInput(
     async (input, key) => {
-      if (actionLoading || selectedVM) return;
+      if (actionLoading || selectedVM || showCreateWizard) return;
+
+      // Open create VM wizard
+      if (input === "c") {
+        setShowCreateWizard(true);
+        return;
+      }
 
       // Clear previous error on any key
       if (actionError) {
@@ -88,8 +96,21 @@ export function VMs() {
         setPendingAction({ type: "reboot", vmid: vm.vmid, node: vm.node, name: vm.name || `VM ${vm.vmid}` });
       }
     },
-    { isActive: !selectedVM }
+    { isActive: !selectedVM && !showCreateWizard }
   );
+
+  // Show create VM wizard
+  if (showCreateWizard) {
+    return (
+      <CreateVM
+        onComplete={() => {
+          setShowCreateWizard(false);
+          refresh();
+        }}
+        onCancel={() => setShowCreateWizard(false)}
+      />
+    );
+  }
 
   // Show detail view if a VM is selected
   if (selectedVM) {
@@ -126,7 +147,7 @@ export function VMs() {
     return (
       <Box flexDirection="column">
         <Text bold color="blue">Virtual Machines</Text>
-        <Text dimColor>No VMs found</Text>
+        <Text dimColor>No VMs found. Press [c] to create a new VM.</Text>
       </Box>
     );
   }
@@ -138,6 +159,7 @@ export function VMs() {
           Virtual Machines
         </Text>
         <Text dimColor> ({vms.length})</Text>
+        <Text dimColor> | [c] Create</Text>
         {loading && <Text dimColor> (refreshing...)</Text>}
         {actionError && <Text color="red"> Error: {actionError}</Text>}
       </Box>
