@@ -6,6 +6,7 @@ import { useKeyboardNavigation } from "../hooks/useKeyboard.ts";
 import { Spinner } from "../components/common/Spinner.tsx";
 import { StatusBadge } from "../components/common/StatusBadge.tsx";
 import { DetailView } from "../components/DetailView.tsx";
+import { CreateLXC } from "./CreateLXC.tsx";
 import { formatBytes, formatUptime, truncate } from "../utils/format.ts";
 import type { Container } from "../api/types.ts";
 
@@ -26,6 +27,7 @@ export function Containers({ host }: ContainersProps) {
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [selectedContainer, setSelectedContainer] = useState<Container | null>(null);
   const [consoleActive, setConsoleActive] = useState(false);
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
 
   // Extract hostname from Proxmox URL for SSH
   const proxmoxHost = (() => {
@@ -72,12 +74,12 @@ export function Containers({ host }: ContainersProps) {
 
   const { selectedIndex } = useKeyboardNavigation({
     itemCount: containers.length,
-    enabled: !actionLoading && !pendingAction && !selectedContainer && !consoleActive,
+    enabled: !actionLoading && !pendingAction && !selectedContainer && !consoleActive && !showCreateWizard,
   });
 
   useInput(
     async (input, key) => {
-      if (actionLoading || selectedContainer) return;
+      if (actionLoading || selectedContainer || showCreateWizard) return;
 
       // Clear previous error on any key
       if (actionError) {
@@ -105,6 +107,12 @@ export function Containers({ host }: ContainersProps) {
         } else if (key.escape || input === "n" || input === "q") {
           setPendingAction(null);
         }
+        return;
+      }
+
+      // Create new container
+      if (input === "c") {
+        setShowCreateWizard(true);
         return;
       }
 
@@ -138,7 +146,7 @@ export function Containers({ host }: ContainersProps) {
         setPendingAction({ type: "reboot", vmid: container.vmid, node: container.node, name: container.name || `CT ${container.vmid}` });
       }
     },
-    { isActive: !selectedContainer && !consoleActive }
+    { isActive: !selectedContainer && !consoleActive && !showCreateWizard }
   );
 
   // Show message while console is active (SSH takes over the terminal)
@@ -147,6 +155,21 @@ export function Containers({ host }: ContainersProps) {
       <Box flexDirection="column">
         <Spinner label="Console session active..." />
       </Box>
+    );
+  }
+
+  // Show create wizard
+  if (showCreateWizard) {
+    return (
+      <CreateLXC
+        onComplete={() => {
+          setShowCreateWizard(false);
+          refresh();
+        }}
+        onCancel={() => {
+          setShowCreateWizard(false);
+        }}
+      />
     );
   }
 
