@@ -8,13 +8,13 @@
 class Proxmux < Formula
   desc "Terminal UI for managing Proxmox VE virtualization platform"
   homepage "https://github.com/asachs01/proxmux"
-  version "0.2.0"
+  version "0.2.1-test"
   license "MIT"
 
   on_macos do
     on_arm do
       url "https://github.com/asachs01/proxmux/releases/download/v#{version}/proxmux-darwin-arm64.tar.gz"
-      sha256 "PLACEHOLDER_DARWIN_ARM64_SHA256"
+      sha256 "7f2a11f927b14966d542973e9f5f50d16d635f3a9d77633a4704ee9f3d8c52d1"
 
       def install
         bin.install "proxmux-darwin-arm64" => "proxmux"
@@ -23,7 +23,7 @@ class Proxmux < Formula
 
     on_intel do
       url "https://github.com/asachs01/proxmux/releases/download/v#{version}/proxmux-darwin-x64.tar.gz"
-      sha256 "PLACEHOLDER_DARWIN_X64_SHA256"
+      sha256 "7f2a11f927b14966d542973e9f5f50d16d635f3a9d77633a4704ee9f3d8c52d1"
 
       def install
         bin.install "proxmux-darwin-x64" => "proxmux"
@@ -34,7 +34,7 @@ class Proxmux < Formula
   on_linux do
     on_arm do
       url "https://github.com/asachs01/proxmux/releases/download/v#{version}/proxmux-linux-arm64.tar.gz"
-      sha256 "PLACEHOLDER_LINUX_ARM64_SHA256"
+      sha256 "7f2a11f927b14966d542973e9f5f50d16d635f3a9d77633a4704ee9f3d8c52d1"
 
       def install
         bin.install "proxmux-linux-arm64" => "proxmux"
@@ -43,7 +43,7 @@ class Proxmux < Formula
 
     on_intel do
       url "https://github.com/asachs01/proxmux/releases/download/v#{version}/proxmux-linux-x64.tar.gz"
-      sha256 "PLACEHOLDER_LINUX_X64_SHA256"
+      sha256 "7f2a11f927b14966d542973e9f5f50d16d635f3a9d77633a4704ee9f3d8c52d1"
 
       def install
         bin.install "proxmux-linux-x64" => "proxmux"
