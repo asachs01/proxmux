@@ -2,6 +2,9 @@
 
 A terminal UI for managing Proxmox VE, built with [Ink](https://github.com/vadimdemedes/ink) and [Bun](https://bun.sh).
 
+<img width="1080" height="759" alt="image" src="https://github.com/user-attachments/assets/c6805b47-71fc-4115-8322-8e1e272c0ed6" />
+
+
 ## Features
 
 - **Dashboard** - Overview of cluster nodes with CPU, memory, and disk usage
