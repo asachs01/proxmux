@@ -6,9 +6,8 @@ import { Dashboard } from "./views/Dashboard.tsx";
 import { VMs } from "./views/VMs.tsx";
 import { Containers } from "./views/Containers.tsx";
 import { Storage } from "./views/Storage.tsx";
-import { loadConfig, type ProxmuxConfig } from "./config/index.ts";
-import { initClient, getClient } from "./api/client.ts";
-import { useViewNavigation } from "./hooks/useKeyboard.ts";
+import type { ProxmuxConfig } from "./config/index.ts";
+import { getClient } from "./api/client.ts";
 
 interface AppProps {
   config: ProxmuxConfig;
@@ -21,23 +20,25 @@ export function App({ config }: AppProps) {
   const [currentView, setCurrentView] = useState<View>("dashboard");
   const [connected, setConnected] = useState(false);
 
-  // Initialize client and test connection
+  // Test connection on mount
   useEffect(() => {
-    initClient(config);
     getClient()
       .testConnection()
       .then(setConnected)
       .catch(() => setConnected(false));
-  }, [config]);
+  }, []);
 
-  // View navigation with number keys
-  useViewNavigation({
-    views,
-    onChange: (view) => setCurrentView(view as View),
-  });
-
-  // Global keyboard shortcuts
+  // Global keyboard shortcuts (handles view switching and quit)
   useInput((input, key) => {
+    // View switching with number keys
+    const num = parseInt(input);
+    if (num >= 1 && num <= views.length) {
+      const view = views[num - 1];
+      if (view) {
+        setCurrentView(view as View);
+      }
+    }
+
     // Quit
     if (input === "q" && !key.ctrl) {
       exit();

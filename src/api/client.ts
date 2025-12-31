@@ -46,6 +46,14 @@ export class ProxmoxClient {
 
     if (!response.ok) {
       const text = await response.text();
+      if (response.status === 401) {
+        throw new Error(
+          `Authentication failed (401). Check your API token:\n` +
+          `  - User format: user@realm (e.g., root@pam)\n` +
+          `  - Token ID: just the name (e.g., proxmux)\n` +
+          `  - Ensure "Privilege Separation" is unchecked in Proxmox`
+        );
+      }
       throw new Error(`Proxmox API error: ${response.status} - ${text}`);
     }
 

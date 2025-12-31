@@ -3,6 +3,7 @@ import React from "react";
 import { render, Box, Text } from "ink";
 import { App } from "./app.tsx";
 import { loadConfig, saveConfig, getConfigPath, type ProxmuxConfig } from "./config/index.ts";
+import { initClient } from "./api/client.ts";
 
 const args = process.argv.slice(2);
 
@@ -86,5 +87,10 @@ Or set environment variables:
   process.exit(1);
 }
 
-// Render the app
-render(<App config={config} />);
+// Initialize API client before rendering
+initClient(config);
+
+// Render the app with full input handling
+const { waitUntilExit } = render(<App config={config} />);
+
+await waitUntilExit();
