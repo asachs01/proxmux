@@ -1,0 +1,146 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Implement Shared Wizard Framework and Form Components",
+        "description": "Create reusable multi-step wizard framework, form components (text input, select, checkbox, radio), progress indicators, confirmation dialogs, and task tracker for all feature wizards.",
+        "details": "Use Ratatui v0.28.1 for TUI components. Implement wizard state management with enum-based steps and shared form validation using regex patterns from Proxmox API schemas. Create FormInput<T> generic component with cursor navigation. ProgressIndicator uses spinning chars and percentage from API upid status. ConfirmationDialog with yes/no keyboard bindings. Extract to src/components/wizard.rs, src/components/forms.rs. Use crossterm v0.28.1 for event handling.",
+        "testStrategy": "Unit test wizard navigation (next/prev/escape), form validation (required fields, numeric ranges), progress rendering with mock API responses. Integration test full wizard flow with mocked Proxmox API client returning 201 Created.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Extend API Client for VM Creation Endpoints",
+        "description": "Add Proxmox API methods for VM creation including node/storage listing, next VMID suggestion, and config defaults in src/api/vm.ts equivalent Rust client.",
+        "details": "Extend reqwest v0.12.5 client in src/api/client.rs. Implement VmCreateRequest struct matching POST /nodes/{node}/qemu schema (vmid, name, iso, cores, memory, net0, boot, etc.). Add get_next_vmid() using GET /nodes/{node}/qemu?next=1. Cache storage ISOs with ttl_cache v0.9. Get defaults from GET /nodes/{node}/qemu/{vmid}/config. Use serde v1.0.210 for JSON serialization with #[serde(rename_all=\"kebab-case\")].",
+        "testStrategy": "Mock reqwest responses for all endpoints. Test request payloads match Proxmox API schema. Verify error handling for 400/409 conflicts. Integration test against test Proxmox instance.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Build VM Creation Wizard UI",
+        "description": "Implement complete VM creation wizard using shared components with node selector, VMID suggestion, ISO selector, CPU/memory/disk/network config.",
+        "details": "7-step wizard: 1)Node/Name/VMID 2)ISO/OS 3)CPU(sockets/cores/type) 4)Memory 5)Disk(storage/size/format) 6)Network(bridge/model/MAC) 7)Boot/Start. Use crossterm events for tab/enter navigation. Auto-suggest next VMID on node change. Real-time validation (VMID unique, memory>512MB). Submit via API client POST /nodes/{node}/qemu. Refresh VM list post-creation. Branch: feature/vm-creation.",
+        "testStrategy": "Test each wizard step validation, API submission with all config combinations, error display for invalid inputs, VM list refresh after 201 response.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Extend API Client for LXC Creation and Template Management",
+        "description": "Add API methods for LXC creation, template listing/downloading, and container config endpoints.",
+        "details": "Implement LxcCreateRequest for POST /nodes/{node}/lxc (vmid, hostname, ostemplate, password, cores, memory, rootfs, net0, unprivileged). Add get_aplinfo(), download_template() with progress via GET/POST /nodes/{node}/aplinfo. Use tokio::fs for template caching in ~/.cache/proxmux/templates/. Progress via tokio::spawn background task with channel updates.",
+        "testStrategy": "Mock API responses for template lists/downloads. Test request payloads validate against Proxmox LXC schema. Verify progress channel updates correctly.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Implement LXC Creation Wizard",
+        "description": "Build container creation wizard with template browser/download, OCI support, network/DNS config, unprivileged toggle.",
+        "details": "6-step wizard: 1)Node/VMID/Hostname 2)Template(available/download) 3)Root password/SSH 4)CPU/Memory 5)Root disk 6)Network(DHCP/static)/DNS/Unprivileged/Start. Template download shows progress bar. Static IP validation (CIDR, gateway). Branch: feature/lxc-creation.",
+        "testStrategy": "Test template download progress, network config validation (valid CIDR, gateway in subnet), full API submission flow.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Implement ISO Management UI and API Extensions",
+        "description": "Add ISO browser, upload/download from local/URL, delete with confirmation across all storages.",
+        "details": "API: GET /nodes/{node}/storage/{storage}/content?content=iso, POST upload/download-url, DELETE content. UI: Table view (storage/filename/size), upload progress via multipart/form-data, URL download with filename/size preview. Use tokio::task for background uploads with mpsc channel progress. Branch: feature/iso-management.",
+        "testStrategy": "Test ISO listing across multiple storages, upload/download progress accuracy, delete confirmation flow, error handling for 404/413.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Build Template Management UI",
+        "description": "Implement LXC/VM template browser, download with progress, VM-to-template conversion, clone wizard.",
+        "details": "Two views: 1)Available templates (Proxmox repo) with download 2)Local templates (vztmpl content). Clone wizard reuses LXC creation but locked to template source. VM template: POST /nodes/{node}/qemu/{vmid}/template. Progress via shared TaskTracker. Branch: feature/templates.",
+        "testStrategy": "Test template download from repo, clone creates running container, VM template conversion succeeds.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          4,
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Implement Task Monitoring and Progress System",
+        "description": "Add global task monitoring with list view, progress display, logs, stop actions, and status bar indicators.",
+        "details": "Background tokio::spawn polls GET /nodes/{node}/tasks every 2s, filter running/upid. TaskList table (upid/type/node/status/progress/time). Log viewer via GET /tasks/{upid}/log with scrolling. Stop via DELETE /tasks/{upid}. Shared TaskTracker pubsub pattern with tokio::broadcast. Status bar shows running count.",
+        "testStrategy": "Test task polling updates UI correctly, log streaming, stop action sends DELETE, completion notifications.",
+        "priority": "medium",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Implement Snapshot Management UI",
+        "description": "Add snapshot list, create/rollback/delete dialogs in VM/LXC detail views with RAM toggle for VMs.",
+        "details": "In detail view: Snapshot table (name/time/VMstate). Create dialog (name/desc/include RAM). Rollback/delete confirmations. API: GET/POST/DELETE /nodes/{node}/qemu/{vmid}/snapshot. Refresh parent list post-rollback. Branch: feature/snapshots.",
+        "testStrategy": "Test snapshot creation with/without RAM, rollback restores correct state, delete removes snapshot.",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          8
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Implement Backup & Restore Functionality",
+        "description": "Add manual backups, backup job scheduling, backup browser, restore wizard with mode/compression/storage selectors.",
+        "details": "Backup now: POST /nodes/{node}/vzdump (mode=snapshot/suspend/stop, compress=lzo/zstd, storage). Jobs: GET/POST /cluster/backup. List: GET storage/content?content=backup. Restore: POST /nodes/{node}/qemu with archive param. Wizard with progress via TaskTracker. Branch: feature/backup-restore.",
+        "testStrategy": "Test manual backup completes, job creation schedules correctly, restore creates VM from backup archive.",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          6,
+          8
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-12-31T21:52:18.034Z",
+      "updated": "2025-12-31T21:52:18.034Z",
+      "description": "Tasks for master context"
+    }
+  }
+}
