@@ -34,7 +34,7 @@ curl -fsSL https://raw.githubusercontent.com/asachs01/proxmux/main/install.sh | 
 ### Homebrew (macOS/Linux)
 
 ```bash
-brew tap asachs01/proxmux
+brew tap asachs01/proxmux https://github.com/asachs01/proxmux
 brew install proxmux
 ```
 

@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 # Homebrew formula for proxmux - Terminal UI for Proxmox VE
-# To use this formula, users should tap the repository:
+# To install:
 #   brew tap asachs01/proxmux https://github.com/asachs01/proxmux
 #   brew install proxmux
 class Proxmux < Formula

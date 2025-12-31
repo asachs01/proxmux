@@ -96,7 +96,7 @@ jobs:
 
             #### Homebrew (macOS/Linux)
             ```bash
-            brew tap asachs01/proxmux
+            brew tap asachs01/proxmux https://github.com/asachs01/proxmux
             brew install proxmux
             ```
 
