@@ -18,23 +18,56 @@ A terminal UI for managing Proxmox VE, built with [Ink](https://github.com/vadim
 
 ## Requirements
 
-- [Bun](https://bun.sh) v1.0.0 or later
 - Proxmox VE with API access
 - API token (recommended) or user credentials
 
 ## Installation
 
-### From npm (recommended)
+### Quick Install (Recommended)
+
+The fastest way to install proxmux on macOS or Linux:
 
 ```bash
-# Install globally
-bun install -g proxmux
+curl -fsSL https://raw.githubusercontent.com/asachs01/proxmux/main/install.sh | bash
+```
 
-# Run
+### Homebrew (macOS/Linux)
+
+```bash
+brew tap asachs01/proxmux
+brew install proxmux
+```
+
+### Pre-built Binaries
+
+Download the latest release for your platform from the [Releases page](https://github.com/asachs01/proxmux/releases):
+
+| Platform | Architecture | Download |
+|----------|--------------|----------|
+| macOS | Apple Silicon (M1/M2/M3) | `proxmux-darwin-arm64.tar.gz` |
+| macOS | Intel | `proxmux-darwin-x64.tar.gz` |
+| Linux | x64 | `proxmux-linux-x64.tar.gz` |
+| Linux | ARM64 | `proxmux-linux-arm64.tar.gz` |
+| Windows | x64 | `proxmux-windows-x64.zip` |
+
+After downloading, extract and move to your PATH:
+
+```bash
+# Example for macOS ARM
+tar -xzf proxmux-darwin-arm64.tar.gz
+sudo mv proxmux-darwin-arm64 /usr/local/bin/proxmux
+```
+
+### From npm/bun
+
+If you have [Bun](https://bun.sh) installed:
+
+```bash
+bun install -g proxmux
 proxmux
 ```
 
-### From source
+### From Source
 
 ```bash
 # Clone the repository

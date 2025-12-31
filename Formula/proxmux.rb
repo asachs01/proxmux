@@ -1,0 +1,75 @@
+# typed: false
+# frozen_string_literal: true
+
+# Homebrew formula for proxmux - Terminal UI for Proxmox VE
+# To use this formula, users should tap the repository:
+#   brew tap asachs01/proxmux https://github.com/asachs01/proxmux
+#   brew install proxmux
+class Proxmux < Formula
+  desc "Terminal UI for managing Proxmox VE virtualization platform"
+  homepage "https://github.com/asachs01/proxmux"
+  version "0.2.0"
+  license "MIT"
+
+  on_macos do
+    on_arm do
+      url "https://github.com/asachs01/proxmux/releases/download/v#{version}/proxmux-darwin-arm64.tar.gz"
+      sha256 "PLACEHOLDER_DARWIN_ARM64_SHA256"
+
+      def install
+        bin.install "proxmux-darwin-arm64" => "proxmux"
+      end
+    end
+
+    on_intel do
+      url "https://github.com/asachs01/proxmux/releases/download/v#{version}/proxmux-darwin-x64.tar.gz"
+      sha256 "PLACEHOLDER_DARWIN_X64_SHA256"
+
+      def install
+        bin.install "proxmux-darwin-x64" => "proxmux"
+      end
+    end
+  end
+
+  on_linux do
+    on_arm do
+      url "https://github.com/asachs01/proxmux/releases/download/v#{version}/proxmux-linux-arm64.tar.gz"
+      sha256 "PLACEHOLDER_LINUX_ARM64_SHA256"
+
+      def install
+        bin.install "proxmux-linux-arm64" => "proxmux"
+      end
+    end
+
+    on_intel do
+      url "https://github.com/asachs01/proxmux/releases/download/v#{version}/proxmux-linux-x64.tar.gz"
+      sha256 "PLACEHOLDER_LINUX_X64_SHA256"
+
+      def install
+        bin.install "proxmux-linux-x64" => "proxmux"
+      end
+    end
+  end
+
+  def caveats
+    <<~EOS
+      To get started, configure your Proxmox connection:
+        proxmux --config
+
+      Or create a config file at ~/.config/proxmux/config.json:
+        {
+          "host": "https://your-proxmox-host:8006",
+          "user": "root@pam",
+          "tokenId": "your-token-id",
+          "tokenSecret": "your-token-secret"
+        }
+
+      For more information, visit:
+        #{homepage}
+    EOS
+  end
+
+  test do
+    assert_match "proxmux", shell_output("#{bin}/proxmux --help", 0)
+  end
+end

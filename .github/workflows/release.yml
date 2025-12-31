@@ -1,0 +1,174 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build binaries
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build all platforms
+        run: |
+          mkdir -p dist
+
+          # Build for each platform
+          bun build ./src/index.tsx --compile --minify --target=bun-darwin-arm64 --outfile dist/proxmux-darwin-arm64
+          bun build ./src/index.tsx --compile --minify --target=bun-darwin-x64 --outfile dist/proxmux-darwin-x64
+          bun build ./src/index.tsx --compile --minify --target=bun-linux-x64 --outfile dist/proxmux-linux-x64
+          bun build ./src/index.tsx --compile --minify --target=bun-linux-arm64 --outfile dist/proxmux-linux-arm64
+          bun build ./src/index.tsx --compile --minify --target=bun-windows-x64 --outfile dist/proxmux-windows-x64.exe
+
+      - name: Create archives
+        run: |
+          cd dist
+
+          # Create tarballs for Unix platforms
+          tar -czvf proxmux-darwin-arm64.tar.gz proxmux-darwin-arm64
+          tar -czvf proxmux-darwin-x64.tar.gz proxmux-darwin-x64
+          tar -czvf proxmux-linux-x64.tar.gz proxmux-linux-x64
+          tar -czvf proxmux-linux-arm64.tar.gz proxmux-linux-arm64
+
+          # Create zip for Windows
+          zip proxmux-windows-x64.zip proxmux-windows-x64.exe
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum *.tar.gz *.zip > checksums.txt
+          cat checksums.txt
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/checksums.txt
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: binaries
+          path: dist
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: proxmux v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## proxmux v${{ steps.version.outputs.VERSION }}
+
+            Terminal UI for managing Proxmox VE.
+
+            ### Installation
+
+            #### Homebrew (macOS/Linux)
+            ```bash
+            brew tap asachs01/proxmux
+            brew install proxmux
+            ```
+
+            #### Quick Install Script
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/asachs01/proxmux/main/install.sh | bash
+            ```
+
+            #### Manual Download
+            Download the appropriate binary for your platform below.
+
+            ### Checksums (SHA256)
+            ```
+            $(cat dist/checksums.txt)
+            ```
+          files: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/checksums.txt
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-formula:
+    name: Update Homebrew Formula
+    needs: release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: binaries
+          path: dist
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Update Formula with SHA256 checksums
+        run: |
+          # Extract SHA256 values from checksums file
+          DARWIN_ARM64_SHA=$(grep 'proxmux-darwin-arm64.tar.gz' dist/checksums.txt | cut -d' ' -f1)
+          DARWIN_X64_SHA=$(grep 'proxmux-darwin-x64.tar.gz' dist/checksums.txt | cut -d' ' -f1)
+          LINUX_ARM64_SHA=$(grep 'proxmux-linux-arm64.tar.gz' dist/checksums.txt | cut -d' ' -f1)
+          LINUX_X64_SHA=$(grep 'proxmux-linux-x64.tar.gz' dist/checksums.txt | cut -d' ' -f1)
+
+          # Update version
+          sed -i "s/version \".*\"/version \"${{ steps.version.outputs.VERSION }}\"/" Formula/proxmux.rb
+
+          # Update SHA256 placeholders
+          sed -i "s/PLACEHOLDER_DARWIN_ARM64_SHA256/${DARWIN_ARM64_SHA}/" Formula/proxmux.rb
+          sed -i "s/PLACEHOLDER_DARWIN_X64_SHA256/${DARWIN_X64_SHA}/" Formula/proxmux.rb
+          sed -i "s/PLACEHOLDER_LINUX_ARM64_SHA256/${LINUX_ARM64_SHA}/" Formula/proxmux.rb
+          sed -i "s/PLACEHOLDER_LINUX_X64_SHA256/${LINUX_X64_SHA}/" Formula/proxmux.rb
+
+          # Also update any existing SHA256 values (for subsequent releases)
+          sed -i "s/sha256 \"[a-f0-9]\{64\}\"/sha256 \"${DARWIN_ARM64_SHA}\"/1" Formula/proxmux.rb
+
+          cat Formula/proxmux.rb
+
+      - name: Commit and push Formula update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/proxmux.rb
+          git diff --staged --quiet || git commit -m "chore: update Formula for v${{ steps.version.outputs.VERSION }}"
+          git push origin main
