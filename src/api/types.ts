@@ -39,15 +39,35 @@ export interface VM {
 }
 
 export interface VMConfig {
-  name: string;
-  memory: number;
-  cores: number;
-  sockets: number;
-  ostype: string;
-  boot: string;
+  name?: string;
+  description?: string;
+  memory?: number;
+  cores?: number;
+  sockets?: number;
+  ostype?: string;
+  boot?: string;
   net0?: string;
+  net1?: string;
   ide0?: string;
+  ide2?: string;
   scsi0?: string;
+  tags?: string;
+  onboot?: number;
+  agent?: string;
+}
+
+export interface ContainerConfig {
+  hostname?: string;
+  description?: string;
+  memory?: number;
+  cores?: number;
+  ostype?: string;
+  net0?: string;
+  net1?: string;
+  rootfs?: string;
+  tags?: string;
+  onboot?: number;
+  unprivileged?: number;
 }
 
 // Container (LXC) types

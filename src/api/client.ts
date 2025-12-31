@@ -3,7 +3,9 @@ import type {
   ProxmoxResponse,
   Node,
   VM,
+  VMConfig,
   Container,
+  ContainerConfig,
   Storage,
   Task,
   ResourceSummary,
@@ -133,6 +135,10 @@ export class ProxmoxClient {
     return this.request<string>("POST", `/nodes/${node}/qemu/${vmid}/status/reboot`);
   }
 
+  async getVMConfig(node: string, vmid: number): Promise<VMConfig> {
+    return this.request<VMConfig>("GET", `/nodes/${node}/qemu/${vmid}/config`);
+  }
+
   // Container operations
   async getContainers(node?: string): Promise<Container[]> {
     if (node) {
@@ -174,6 +180,10 @@ export class ProxmoxClient {
 
   async rebootContainer(node: string, vmid: number): Promise<string> {
     return this.request<string>("POST", `/nodes/${node}/lxc/${vmid}/status/reboot`);
+  }
+
+  async getContainerConfig(node: string, vmid: number): Promise<ContainerConfig> {
+    return this.request<ContainerConfig>("GET", `/nodes/${node}/lxc/${vmid}/config`);
   }
 
   // Storage operations

@@ -4,7 +4,9 @@ import { useVMs } from "../hooks/useProxmox.ts";
 import { useKeyboardNavigation } from "../hooks/useKeyboard.ts";
 import { Spinner } from "../components/common/Spinner.tsx";
 import { StatusBadge } from "../components/common/StatusBadge.tsx";
+import { DetailView } from "../components/DetailView.tsx";
 import { formatBytes, formatUptime, truncate } from "../utils/format.ts";
+import type { VM } from "../api/types.ts";
 
 type PendingAction = { type: "stop" | "reboot"; vmid: number; node: string; name: string } | null;
 
@@ -16,15 +18,16 @@ export function VMs() {
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const [selectedVM, setSelectedVM] = useState<VM | null>(null);
 
   const { selectedIndex } = useKeyboardNavigation({
     itemCount: vms.length,
-    enabled: !actionLoading && !pendingAction,
+    enabled: !actionLoading && !pendingAction && !selectedVM,
   });
 
   useInput(
     async (input, key) => {
-      if (actionLoading) return;
+      if (actionLoading || selectedVM) return;
 
       // Clear previous error on any key
       if (actionError) {
@@ -63,6 +66,12 @@ export function VMs() {
         return;
       }
 
+      // Open detail view on Enter
+      if (key.return) {
+        setSelectedVM(vm);
+        return;
+      }
+
       if (input === "s" && vm.status !== "running") {
         setActionLoading(vm.vmid);
         setActionError(null);
@@ -79,8 +88,31 @@ export function VMs() {
         setPendingAction({ type: "reboot", vmid: vm.vmid, node: vm.node, name: vm.name || `VM ${vm.vmid}` });
       }
     },
-    { isActive: true }
+    { isActive: !selectedVM }
   );
+
+  // Show detail view if a VM is selected
+  if (selectedVM) {
+    return (
+      <DetailView
+        type="vm"
+        item={selectedVM}
+        onBack={() => {
+          setSelectedVM(null);
+          refresh();
+        }}
+        onStart={async () => {
+          await startVM(selectedVM.node, selectedVM.vmid);
+        }}
+        onStop={async () => {
+          await stopVM(selectedVM.node, selectedVM.vmid);
+        }}
+        onReboot={async () => {
+          await rebootVM(selectedVM.node, selectedVM.vmid);
+        }}
+      />
+    );
+  }
 
   if (loading && vms.length === 0) {
     return <Spinner label="Loading VMs..." />;

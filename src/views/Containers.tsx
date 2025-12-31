@@ -4,7 +4,9 @@ import { useContainers } from "../hooks/useProxmox.ts";
 import { useKeyboardNavigation } from "../hooks/useKeyboard.ts";
 import { Spinner } from "../components/common/Spinner.tsx";
 import { StatusBadge } from "../components/common/StatusBadge.tsx";
+import { DetailView } from "../components/DetailView.tsx";
 import { formatBytes, formatUptime, truncate } from "../utils/format.ts";
+import type { Container } from "../api/types.ts";
 
 type PendingAction = { type: "stop" | "reboot"; vmid: number; node: string; name: string } | null;
 
@@ -17,15 +19,16 @@ export function Containers() {
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const [selectedContainer, setSelectedContainer] = useState<Container | null>(null);
 
   const { selectedIndex } = useKeyboardNavigation({
     itemCount: containers.length,
-    enabled: !actionLoading && !pendingAction,
+    enabled: !actionLoading && !pendingAction && !selectedContainer,
   });
 
   useInput(
     async (input, key) => {
-      if (actionLoading) return;
+      if (actionLoading || selectedContainer) return;
 
       // Clear previous error on any key
       if (actionError) {
@@ -64,6 +67,12 @@ export function Containers() {
         return;
       }
 
+      // Open detail view on Enter
+      if (key.return) {
+        setSelectedContainer(container);
+        return;
+      }
+
       if (input === "s" && container.status !== "running") {
         setActionLoading(container.vmid);
         setActionError(null);
@@ -80,8 +89,31 @@ export function Containers() {
         setPendingAction({ type: "reboot", vmid: container.vmid, node: container.node, name: container.name || `CT ${container.vmid}` });
       }
     },
-    { isActive: true }
+    { isActive: !selectedContainer }
   );
+
+  // Show detail view if a container is selected
+  if (selectedContainer) {
+    return (
+      <DetailView
+        type="container"
+        item={selectedContainer}
+        onBack={() => {
+          setSelectedContainer(null);
+          refresh();
+        }}
+        onStart={async () => {
+          await startContainer(selectedContainer.node, selectedContainer.vmid);
+        }}
+        onStop={async () => {
+          await stopContainer(selectedContainer.node, selectedContainer.vmid);
+        }}
+        onReboot={async () => {
+          await rebootContainer(selectedContainer.node, selectedContainer.vmid);
+        }}
+      />
+    );
+  }
 
   if (loading && containers.length === 0) {
     return <Spinner label="Loading containers..." />;
