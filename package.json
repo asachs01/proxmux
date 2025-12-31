@@ -2,6 +2,27 @@
   "name": "proxmux",
   "version": "0.1.0",
   "description": "Terminal UI for managing Proxmox VE",
+  "author": "Roshan Kumaraswamy",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/roshie548/proxmux.git"
+  },
+  "homepage": "https://github.com/roshie548/proxmux",
+  "bugs": {
+    "url": "https://github.com/roshie548/proxmux/issues"
+  },
+  "keywords": [
+    "proxmox",
+    "terminal",
+    "tui",
+    "cli",
+    "virtualization",
+    "lxc",
+    "containers",
+    "vm",
+    "management"
+  ],
   "type": "module",
   "bin": {
     "proxmux": "./src/index.tsx"
@@ -9,6 +30,9 @@
   "scripts": {
     "start": "bun run src/index.tsx",
     "dev": "bun --watch run src/index.tsx"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
   },
   "dependencies": {
     "ink": "^5.0.1",
