@@ -1,111 +1,107 @@
----
-description: Use Bun instead of Node.js, npm, pnpm, or vite.
-globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
-alwaysApply: false
----
+# Proxmux Development Guide
 
-Default to using Bun instead of Node.js.
+Terminal UI for managing Proxmox VE clusters, built with [Ink](https://github.com/vadimdemedes/ink) (React for CLIs) and [Bun](https://bun.sh).
 
-- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
-- Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Use `bunx <package> <command>` instead of `npx <package> <command>`
-- Bun automatically loads .env, so don't use dotenv.
+## Commands
 
-## APIs
+```bash
+bun install          # Install dependencies
+bun run dev          # Run with hot reload
+bun run build        # Build binary for current platform
+bun run build:all    # Build binaries for all platforms
+bun --bun tsc --noEmit  # Type check
+```
 
-- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
-- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
-- `Bun.redis` for Redis. Don't use `ioredis`.
-- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
-- `WebSocket` is built-in. Don't use `ws`.
-- Prefer `Bun.file` over `node:fs`'s readFile/writeFile
-- Bun.$`ls` instead of execa.
+## Architecture
 
-## Testing
+```
+src/
+├── api/           # Proxmox API client and types
+├── components/    # Reusable UI components (Sidebar, StatusBar, DetailView)
+├── context/       # React contexts (EditModeContext)
+├── hooks/         # Custom hooks (useProxmox, useKeyboard)
+├── views/         # Main screens (Dashboard, VMs, Containers, Storage)
+├── utils/         # Helpers (format.ts)
+├── config/        # Config file loading
+├── app.tsx        # Main app with layout and routing
+└── index.tsx      # Entry point
+```
 
-Use `bun test` to run tests.
+## Ink Patterns
 
-```ts#index.test.ts
-import { test, expect } from "bun:test";
+This is a terminal UI, not a web app. Uses Ink (React renderer for CLI).
 
-test("hello world", () => {
-  expect(1).toBe(1);
+### Layout with Box and Text
+
+```tsx
+import { Box, Text } from "ink";
+
+<Box flexDirection="column" padding={1}>
+  <Text bold color="blue">Title</Text>
+  <Text dimColor>Subtitle</Text>
+</Box>
+```
+
+### Keyboard Input
+
+```tsx
+import { useInput } from "ink";
+
+useInput((input, key) => {
+  if (input === "j" || key.downArrow) moveDown();
+  if (input === "q") exit();
+  if (key.return) confirm();
+  if (key.escape) cancel();
 });
 ```
 
-## Frontend
+### Responsive Sizing
 
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
+```tsx
+import { useStdout } from "ink";
 
-Server:
+const { stdout } = useStdout();
+const width = stdout?.columns || 80;
+const isNarrow = width < 80;
 
-```ts#index.ts
-import index from "./index.html"
-
-Bun.serve({
-  routes: {
-    "/": index,
-    "/api/users/:id": {
-      GET: (req) => {
-        return new Response(JSON.stringify({ id: req.params.id }));
-      },
-    },
-  },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
-  development: {
-    hmr: true,
-    console: true,
-  }
-})
+// Hide optional columns on narrow terminals
+// Use compact formats when space is limited
+// Add wrap="truncate" to prevent line wrapping
 ```
 
-HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
+### Preventing Text Wrap
 
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
+Always use `wrap="truncate"` on Text in tables/lists:
+
+```tsx
+<Box width={cols.name}>
+  <Text wrap="truncate">{truncate(name, cols.name - 1)}</Text>
+</Box>
 ```
 
-With the following `frontend.tsx`:
+## API Client
 
-```tsx#frontend.tsx
-import React from "react";
-import { createRoot } from "react-dom/client";
+```tsx
+import { getClient } from "./api/client";
 
-// import .css files directly and it works
-import './index.css';
-
-const root = createRoot(document.body);
-
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
-}
-
-root.render(<Frontend />);
+const client = getClient();
+const vms = await client.getVMs();
+const config = await client.getContainerConfig(node, vmid);
 ```
 
-Then, run index.ts
+## Adding a New View
 
-```sh
-bun --hot ./index.ts
-```
+1. Create `src/views/NewView.tsx`
+2. Add to `src/app.tsx` switch statement
+3. Add to `src/components/Sidebar.tsx` views array
+4. Add keyboard hints to `src/components/StatusBar.tsx`
 
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
+## Release Process
+
+1. Update version in `package.json`
+2. Update `CHANGELOG.md`
+3. Commit and tag: `git tag v0.x.x && git push --tags`
+4. GitHub Actions automatically:
+   - Builds binaries for all platforms
+   - Publishes to npm
+   - Updates Homebrew formula
