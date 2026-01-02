@@ -35,7 +35,10 @@ export function Select<T = string>({
 
       if (key.return) {
         if (isOpen) {
-          onChange(options[highlightedIndex].value);
+          const selected = options[highlightedIndex];
+          if (selected) {
+            onChange(selected.value);
+          }
           setIsOpen(false);
         } else {
           setIsOpen(true);
