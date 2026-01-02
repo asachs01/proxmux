@@ -54,12 +54,14 @@ export function App({ config }: AppProps) {
     // Don't process other keys when help is shown
     if (showHelp) return;
 
-    // View switching with number keys
-    const num = parseInt(input);
-    if (num >= 1 && num <= views.length) {
-      const view = views[num - 1];
-      if (view) {
-        setCurrentView(view as View);
+    // View switching with Ctrl+number keys (prevents conflict with text input)
+    if (key.ctrl) {
+      const num = parseInt(input);
+      if (num >= 1 && num <= views.length) {
+        const view = views[num - 1];
+        if (view) {
+          setCurrentView(view as View);
+        }
       }
     }
 
