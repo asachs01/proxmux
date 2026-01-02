@@ -58,23 +58,20 @@ export function Select<T = string>({
     { isActive }
   );
 
+  const displayValue = selectedOption?.label || placeholder;
+
   return (
     <Box flexDirection="column">
       <Box>
         <Text bold={isActive} color={isActive ? "cyan" : undefined}>
           {label}:{" "}
         </Text>
-        <Box
-          borderStyle={isActive ? "single" : undefined}
-          borderColor={isActive ? "cyan" : "gray"}
-          paddingX={1}
-          minWidth={30}
-        >
-          <Text color={selectedOption ? undefined : "gray"}>
-            {selectedOption?.label || placeholder}
-            {isActive && <Text dimColor> [Enter to {isOpen ? "select" : "open"}]</Text>}
-          </Text>
-        </Box>
+        <Text color={isActive ? "cyan" : "gray"}>[</Text>
+        <Text color={selectedOption ? undefined : "gray"}>
+          {" "}{displayValue}{" "}
+        </Text>
+        <Text color={isActive ? "cyan" : "gray"}>]</Text>
+        {isActive && <Text dimColor> ↵ to {isOpen ? "select" : "open"}</Text>}
       </Box>
 
       {isOpen && isActive && (
