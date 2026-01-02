@@ -126,6 +126,7 @@ function TemplateStep({ isActive, onFieldChange, data, setFieldFocus, focusedFie
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [templateStorages, setTemplateStorages] = useState<Storage[]>([]);
+  const [selectOpen, setSelectOpen] = useState(false);
 
   const node = data.node as string;
 
@@ -162,9 +163,14 @@ function TemplateStep({ isActive, onFieldChange, data, setFieldFocus, focusedFie
     } else if (key.escape && showDownload) {
       setShowDownload(false);
       setFieldFocus(0);
-    } else if (key.tab && !key.shift) {
-      if (showDownload) {
+    } else if (!selectOpen && showDownload) {
+      // Navigate between fields when dropdown is closed
+      if (key.tab && !key.shift) {
         setFieldFocus((focusedField + 1) % 2);
+      } else if (key.downArrow || input === "j") {
+        setFieldFocus((focusedField + 1) % 2);
+      } else if (key.upArrow || input === "k") {
+        setFieldFocus((focusedField - 1 + 2) % 2);
       }
     }
   }, { isActive });
@@ -194,21 +200,28 @@ function TemplateStep({ isActive, onFieldChange, data, setFieldFocus, focusedFie
     return <Spinner label="Loading templates..." />;
   }
 
-  if (showDownload) {
-    const downloadOptions: SelectOption<string>[] = availableTemplates
+  // Memoize options to prevent recreation on each render
+  const downloadOptions = React.useMemo(() =>
+    availableTemplates
       .filter((t) => t.type === "lxc")
-      .slice(0, 50) // Limit for performance
+      .slice(0, 100) // Show more templates
       .map((t) => ({
         label: `${t.os} - ${t.package}`,
         value: t.template,
         description: t.headline,
-      }));
+      })),
+    [availableTemplates]
+  );
 
-    const storageOptions: SelectOption<string>[] = templateStorages.map((s) => ({
+  const storageOptions = React.useMemo(() =>
+    templateStorages.map((s) => ({
       label: s.storage,
       value: s.storage,
-    }));
+    })),
+    [templateStorages]
+  );
 
+  if (showDownload) {
     return (
       <Box flexDirection="column" gap={1}>
         <Text bold color="yellow">Download Template from Proxmox Repository</Text>
@@ -223,6 +236,7 @@ function TemplateStep({ isActive, onFieldChange, data, setFieldFocus, focusedFie
               value={(data.templateStorage as string) || null}
               onChange={(v) => onFieldChange("templateStorage", v)}
               isActive={isActive && focusedField === 0}
+              onOpenChange={setSelectOpen}
             />
             <Select
               label="Template"
@@ -234,8 +248,9 @@ function TemplateStep({ isActive, onFieldChange, data, setFieldFocus, focusedFie
               }}
               isActive={isActive && focusedField === 1}
               placeholder="Select a template to download..."
+              onOpenChange={setSelectOpen}
             />
-            <Text dimColor>[Esc] Cancel download</Text>
+            <Text dimColor>j/k to navigate, Enter to select, [Esc] Cancel</Text>
           </>
         )}
       </Box>
