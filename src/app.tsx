@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useApp, useInput, useStdout } from "ink";
+import { useApp, useInput, useStdout, Box } from "ink";
 import { Layout } from "./components/Layout.tsx";
 import type { View } from "./components/Sidebar.tsx";
 import { Dashboard } from "./views/Dashboard.tsx";
 import { VMs } from "./views/VMs.tsx";
 import { Containers } from "./views/Containers.tsx";
 import { Storage } from "./views/Storage.tsx";
+import { HelpOverlay } from "./components/common/HelpOverlay.tsx";
 import type { ProxmuxConfig } from "./config/index.ts";
 import { getClient } from "./api/client.ts";
 
@@ -21,6 +22,7 @@ export function App({ config }: AppProps) {
   const [currentView, setCurrentView] = useState<View>("dashboard");
   const [connected, setConnected] = useState(false);
   const [terminalHeight, setTerminalHeight] = useState(stdout?.rows || 24);
+  const [showHelp, setShowHelp] = useState(false);
 
   // Update height when terminal resizes
   useEffect(() => {
@@ -43,6 +45,15 @@ export function App({ config }: AppProps) {
 
   // Global keyboard shortcuts (handles view switching and quit)
   useInput((input, key) => {
+    // Help toggle
+    if (input === "?") {
+      setShowHelp((prev) => !prev);
+      return;
+    }
+
+    // Don't process other keys when help is shown
+    if (showHelp) return;
+
     // View switching with number keys
     const num = parseInt(input);
     if (num >= 1 && num <= views.length) {
@@ -76,6 +87,14 @@ export function App({ config }: AppProps) {
         return <Dashboard />;
     }
   };
+
+  if (showHelp) {
+    return (
+      <Box flexDirection="column" padding={1}>
+        <HelpOverlay onClose={() => setShowHelp(false)} />
+      </Box>
+    );
+  }
 
   return (
     <Layout
