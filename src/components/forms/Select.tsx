@@ -76,22 +76,17 @@ export function Select<T = string>({
 
       {isOpen && isActive && (
         <Box flexDirection="column" paddingLeft={label.length + 2}>
-          {options.map((option, index) => {
-            const isHighlighted = index === highlightedIndex;
-            const isSelected = option.value === value;
-
-            return (
-              <Text key={String(option.value)}>
-                <Text inverse={isHighlighted}>
-                  {isSelected ? "● " : "○ "}
-                  {option.label}
-                </Text>
-                {option.description && (
-                  <Text dimColor> - {option.description}</Text>
-                )}
+          {options.map((option, index) => (
+            <Box key={String(option.value)} height={1}>
+              <Text inverse={index === highlightedIndex}>
+                {option.value === value ? "● " : "○ "}
+                {option.label}
               </Text>
-            );
-          })}
+              {option.description && (
+                <Text dimColor> - {option.description}</Text>
+              )}
+            </Box>
+          ))}
         </Box>
       )}
     </Box>
