@@ -80,25 +80,22 @@ export function TextInput({
     displayText = displayValue || " ";
   }
 
+  const bracketColor = error ? "red" : isActive ? "cyan" : "gray";
+
   return (
     <Box flexDirection="column">
       <Box>
         <Text bold={isActive} color={isActive ? "cyan" : undefined}>
           {label}:{" "}
         </Text>
-        <Box
-          borderStyle={isActive ? "single" : undefined}
-          borderColor={error ? "red" : isActive ? "cyan" : "gray"}
-          paddingX={isActive ? 1 : 0}
-          width={width}
+        <Text color={bracketColor}>[</Text>
+        <Text
+          color={showPlaceholder ? "gray" : undefined}
+          dimColor={!isActive && !showPlaceholder}
         >
-          <Text
-            color={showPlaceholder ? "gray" : undefined}
-            dimColor={!isActive && !showPlaceholder}
-          >
-            {displayText.slice(0, width - 4)}
-          </Text>
-        </Box>
+          {" "}{displayText.slice(0, width - 4)}{" "}
+        </Text>
+        <Text color={bracketColor}>]</Text>
       </Box>
       {error && isActive && (
         <Box paddingLeft={label.length + 2}>
