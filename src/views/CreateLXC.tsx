@@ -196,11 +196,8 @@ function TemplateStep({ isActive, onFieldChange, data, setFieldFocus, focusedFie
     }
   }, [node, data.templateStorage]);
 
-  if (loading) {
-    return <Spinner label="Loading templates..." />;
-  }
-
   // Memoize options to prevent recreation on each render
+  // Must be before any conditional returns (Rules of Hooks)
   const downloadOptions = React.useMemo(() =>
     availableTemplates
       .filter((t) => t.type === "lxc")
@@ -220,6 +217,10 @@ function TemplateStep({ isActive, onFieldChange, data, setFieldFocus, focusedFie
     })),
     [templateStorages]
   );
+
+  if (loading) {
+    return <Spinner label="Loading templates..." />;
+  }
 
   if (showDownload) {
     return (
