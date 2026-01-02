@@ -67,7 +67,8 @@ export function Select<T = string>({
         <Box
           borderStyle={isActive ? "single" : undefined}
           borderColor={isActive ? "cyan" : "gray"}
-          paddingX={isActive ? 1 : 0}
+          paddingX={1}
+          minWidth={30}
         >
           <Text color={selectedOption ? undefined : "gray"}>
             {selectedOption?.label || placeholder}
