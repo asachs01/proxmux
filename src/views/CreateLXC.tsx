@@ -83,6 +83,9 @@ function BasicStep({ isActive, onFieldChange, data, setFieldFocus, focusedField 
         isActive={isActive && focusedField === 0}
         placeholder="Select a node..."
       />
+      {nodes.length > 0 && (
+        <Text dimColor>({nodes.length} nodes available)</Text>
+      )}
       <NumberInput
         label="CT ID"
         value={(data.vmid as number) || null}
