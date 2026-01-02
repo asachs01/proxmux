@@ -75,25 +75,21 @@ export function Select<T = string>({
       </Box>
 
       {isOpen && isActive && (
-        <Box flexDirection="column" paddingLeft={label.length + 2} marginTop={1}>
+        <Box flexDirection="column" paddingLeft={label.length + 2}>
           {options.map((option, index) => {
             const isHighlighted = index === highlightedIndex;
             const isSelected = option.value === value;
 
             return (
-              <Box key={String(option.value)}>
-                <Text
-                  inverse={isHighlighted}
-                  color={isSelected ? "green" : undefined}
-                  bold={isSelected}
-                >
+              <Text key={String(option.value)}>
+                <Text inverse={isHighlighted}>
                   {isSelected ? "● " : "○ "}
                   {option.label}
                 </Text>
                 {option.description && (
                   <Text dimColor> - {option.description}</Text>
                 )}
-              </Box>
+              </Text>
             );
           })}
         </Box>
