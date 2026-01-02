@@ -28,13 +28,28 @@ export function Select<T = string>({
 }: SelectProps<T>) {
   const [isOpen, setIsOpenState] = React.useState(false);
   const [highlightedIndex, setHighlightedIndex] = React.useState(0);
+  const [searchQuery, setSearchQuery] = React.useState("");
 
   const setIsOpen = React.useCallback((open: boolean) => {
     setIsOpenState(open);
     onOpenChange?.(open);
+    if (!open) {
+      setSearchQuery(""); // Clear search when closing
+    }
   }, [onOpenChange]);
 
   const selectedOption = options.find((opt) => opt.value === value);
+
+  // Filter options based on search query
+  const filteredOptions = React.useMemo(() => {
+    if (!searchQuery) return options;
+    const query = searchQuery.toLowerCase();
+    return options.filter(
+      (opt) =>
+        opt.label.toLowerCase().includes(query) ||
+        opt.description?.toLowerCase().includes(query)
+    );
+  }, [options, searchQuery]);
 
   useInput(
     (input, key) => {
@@ -42,7 +57,7 @@ export function Select<T = string>({
 
       if (key.return) {
         if (isOpen) {
-          const selected = options[highlightedIndex];
+          const selected = filteredOptions[highlightedIndex];
           if (selected) {
             onChange(selected.value);
           }
@@ -53,12 +68,26 @@ export function Select<T = string>({
           setHighlightedIndex(currentIndex >= 0 ? currentIndex : 0);
         }
       } else if (key.escape) {
-        setIsOpen(false);
+        if (searchQuery) {
+          setSearchQuery(""); // First Esc clears search
+          setHighlightedIndex(0);
+        } else {
+          setIsOpen(false);
+        }
+      } else if (key.backspace || key.delete) {
+        if (isOpen && searchQuery) {
+          setSearchQuery((prev) => prev.slice(0, -1));
+          setHighlightedIndex(0);
+        }
       } else if (isOpen) {
-        if (key.upArrow || input === "k") {
+        if (key.upArrow) {
           setHighlightedIndex((prev) => Math.max(0, prev - 1));
-        } else if (key.downArrow || input === "j") {
-          setHighlightedIndex((prev) => Math.min(options.length - 1, prev + 1));
+        } else if (key.downArrow) {
+          setHighlightedIndex((prev) => Math.min(filteredOptions.length - 1, prev + 1));
+        } else if (input && !key.ctrl && !key.meta && input.length === 1) {
+          // Type to search - append character to search query
+          setSearchQuery((prev) => prev + input);
+          setHighlightedIndex(0);
         }
       }
     },
@@ -78,22 +107,40 @@ export function Select<T = string>({
           {" "}{displayValue}{" "}
         </Text>
         <Text color={isActive ? "cyan" : "gray"}>]</Text>
-        {isActive && <Text dimColor> ↵ to {isOpen ? "select" : "open"}</Text>}
+        {isActive && !isOpen && <Text dimColor> ↵ to open</Text>}
       </Box>
 
       {isOpen && isActive && (
         <Box flexDirection="column" paddingLeft={label.length + 2}>
-          {options.map((option, index) => (
-            <Box key={String(option.value)} height={1}>
-              <Text inverse={index === highlightedIndex}>
-                {option.value === value ? "● " : "○ "}
-                {option.label}
-              </Text>
-              {option.description && (
-                <Text dimColor> - {option.description}</Text>
-              )}
+          {/* Search indicator */}
+          <Box height={1} marginBottom={filteredOptions.length > 0 ? 0 : 0}>
+            <Text color="yellow">
+              {searchQuery ? `🔍 "${searchQuery}"` : "Type to search..."}
+            </Text>
+            <Text dimColor> ({filteredOptions.length} matches)</Text>
+          </Box>
+          {filteredOptions.length === 0 ? (
+            <Box height={1}>
+              <Text color="gray">No matches found</Text>
             </Box>
-          ))}
+          ) : (
+            filteredOptions.slice(0, 15).map((option, index) => (
+              <Box key={String(option.value)} height={1}>
+                <Text inverse={index === highlightedIndex}>
+                  {option.value === value ? "● " : "○ "}
+                  {option.label}
+                </Text>
+                {option.description && (
+                  <Text dimColor> - {option.description}</Text>
+                )}
+              </Box>
+            ))
+          )}
+          {filteredOptions.length > 15 && (
+            <Box height={1}>
+              <Text dimColor>... and {filteredOptions.length - 15} more (type to filter)</Text>
+            </Box>
+          )}
         </Box>
       )}
     </Box>
