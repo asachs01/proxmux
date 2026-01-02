@@ -84,7 +84,7 @@ function BasicStep({ isActive, onFieldChange, data, setFieldFocus, focusedField 
         placeholder="Select a node..."
       />
       <NumberInput
-        label="VM ID"
+        label="CT ID"
         value={(data.vmid as number) || null}
         onChange={(v) => onFieldChange("vmid", v)}
         min={100}
