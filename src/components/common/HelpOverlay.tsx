@@ -32,7 +32,7 @@ export function HelpOverlay({ onClose }: HelpOverlayProps) {
         <Text>  <Text color="yellow">j/k ↑/↓</Text>   Move up/down in lists</Text>
         <Text>  <Text color="yellow">Enter</Text>     Select item / Open detail view</Text>
         <Text>  <Text color="yellow">Esc</Text>       Go back / Cancel</Text>
-        <Text>  <Text color="yellow">Tab</Text>       Cycle through views</Text>
+        <Text>  <Text color="yellow">Tab</Text>       Next field (in forms)</Text>
       </Box>
 
       <Box flexDirection="column" marginBottom={1}>

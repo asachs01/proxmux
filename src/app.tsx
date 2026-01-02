@@ -63,13 +63,6 @@ export function App({ config }: AppProps) {
       }
     }
 
-    // Tab to cycle through views
-    if (key.tab) {
-      const currentIndex = views.indexOf(currentView);
-      const nextIndex = (currentIndex + 1) % views.length;
-      setCurrentView(views[nextIndex] as View);
-    }
-
     // Quit
     if (input === "q" && !key.ctrl) {
       exit();

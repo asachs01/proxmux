@@ -14,6 +14,7 @@ export interface SelectProps<T = string> {
   onChange: (value: T) => void;
   isActive?: boolean;
   placeholder?: string;
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
 export function Select<T = string>({
@@ -23,9 +24,15 @@ export function Select<T = string>({
   onChange,
   isActive = false,
   placeholder = "Select an option...",
+  onOpenChange,
 }: SelectProps<T>) {
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isOpen, setIsOpenState] = React.useState(false);
   const [highlightedIndex, setHighlightedIndex] = React.useState(0);
+
+  const setIsOpen = React.useCallback((open: boolean) => {
+    setIsOpenState(open);
+    onOpenChange?.(open);
+  }, [onOpenChange]);
 
   const selectedOption = options.find((opt) => opt.value === value);
 

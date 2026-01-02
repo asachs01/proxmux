@@ -29,6 +29,7 @@ function BasicStep({ isActive, onFieldChange, data, setFieldFocus, focusedField 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [loading, setLoading] = useState(true);
   const [nextVMID, setNextVMID] = useState<number | null>(null);
+  const [selectOpen, setSelectOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -56,10 +57,17 @@ function BasicStep({ isActive, onFieldChange, data, setFieldFocus, focusedField 
 
   useInput((input, key) => {
     if (!isActive) return;
+    // Navigate fields with Tab or arrow keys (when dropdown is closed)
     if (key.tab && !key.shift) {
       setFieldFocus((focusedField + 1) % 3);
     } else if (key.tab && key.shift) {
       setFieldFocus((focusedField - 1 + 3) % 3);
+    } else if (!selectOpen) {
+      if (key.downArrow || input === "j") {
+        setFieldFocus((focusedField + 1) % 3);
+      } else if (key.upArrow || input === "k") {
+        setFieldFocus((focusedField - 1 + 3) % 3);
+      }
     }
   }, { isActive });
 
@@ -82,6 +90,7 @@ function BasicStep({ isActive, onFieldChange, data, setFieldFocus, focusedField 
         onChange={(v) => onFieldChange("node", v)}
         isActive={isActive && focusedField === 0}
         placeholder="Select a node..."
+        onOpenChange={setSelectOpen}
       />
       {nodes.length > 0 && (
         <Text dimColor>({nodes.length} nodes available)</Text>
@@ -103,7 +112,7 @@ function BasicStep({ isActive, onFieldChange, data, setFieldFocus, focusedField 
         placeholder="my-container"
         required
       />
-      <Text dimColor>Tab to move between fields</Text>
+      <Text dimColor>j/k or Tab to move between fields</Text>
     </Box>
   );
 }
@@ -292,7 +301,7 @@ function AuthStep({ isActive, onFieldChange, data, setFieldFocus, focusedField }
         placeholder="ssh-rsa AAAA... (optional)"
         width={60}
       />
-      <Text dimColor>Tab to move between fields</Text>
+      <Text dimColor>j/k or Tab to move between fields</Text>
     </Box>
   );
 }
@@ -416,7 +425,7 @@ function StorageStep({ isActive, onFieldChange, data, setFieldFocus, focusedFiel
         step={1}
         isActive={isActive && focusedField === 1}
       />
-      <Text dimColor>Tab to move between fields</Text>
+      <Text dimColor>j/k or Tab to move between fields</Text>
     </Box>
   );
 }
@@ -527,7 +536,7 @@ function NetworkStep({ isActive, onFieldChange, data, setFieldFocus, focusedFiel
         isActive={isActive && focusedField === currentField++}
         placeholder="local (optional)"
       />
-      <Text dimColor>Tab to move between fields</Text>
+      <Text dimColor>j/k or Tab to move between fields</Text>
     </Box>
   );
 }
