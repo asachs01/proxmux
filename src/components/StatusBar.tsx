@@ -9,10 +9,10 @@ interface StatusBarProps {
 }
 
 const viewHints: Record<View, string> = {
-  dashboard: "r:refresh",
-  vms: "j/k:navigate  Enter:select  s:start  x:stop  R:reboot  r:refresh",
-  containers: "j/k:navigate  Enter:select  s:start  x:stop  R:reboot  r:refresh",
-  storage: "j/k:navigate  r:refresh",
+  dashboard: "r:refresh  ?:help",
+  vms: "j/k:navigate  Enter:select  c:create  s:start  x:stop  R:reboot  r:refresh  ?:help",
+  containers: "j/k:navigate  Enter:select  c:create  s:start  x:stop  R:reboot  r:refresh  ?:help",
+  storage: "j/k:navigate  r:refresh  ?:help",
 };
 
 export function StatusBar({ view, connected, host }: StatusBarProps) {
