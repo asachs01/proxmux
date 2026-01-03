@@ -83,24 +83,22 @@ export function NumberInput({
   const displayValue = inputValue || placeholder;
   const showPlaceholder = !inputValue && placeholder;
 
+  const bracketColor = error ? "red" : isActive ? "cyan" : "gray";
+
   return (
     <Box flexDirection="column">
       <Box>
         <Text bold={isActive} color={isActive ? "cyan" : undefined}>
           {label}:{" "}
         </Text>
-        <Box
-          borderStyle={isActive ? "single" : undefined}
-          borderColor={error ? "red" : isActive ? "cyan" : "gray"}
-          paddingX={isActive ? 1 : 0}
-        >
-          <Text color={showPlaceholder ? "gray" : undefined}>
-            {isActive ? displayValue + "█" : displayValue}
-          </Text>
-          {unit && <Text dimColor> {unit}</Text>}
-        </Box>
+        <Text color={bracketColor}>[</Text>
+        <Text color={showPlaceholder ? "gray" : undefined}>
+          {" "}{isActive ? displayValue + "█" : displayValue}{" "}
+        </Text>
+        <Text color={bracketColor}>]</Text>
+        {unit && <Text dimColor> {unit}</Text>}
         {isActive && (
-          <Text dimColor> [↑/↓ to adjust by {step}]</Text>
+          <Text dimColor> ↑/↓ ±{step}</Text>
         )}
       </Box>
       {error && isActive && (

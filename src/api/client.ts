@@ -10,6 +10,10 @@ import type {
   Task,
   ResourceSummary,
   NetworkInterface,
+  Template,
+  AvailableTemplate,
+  LXCCreateConfig,
+  StorageContent,
 } from "./types.ts";
 
 export class ProxmoxClient {
@@ -189,6 +193,150 @@ export class ProxmoxClient {
 
   async getContainerInterfaces(node: string, vmid: number): Promise<NetworkInterface[]> {
     return this.request<NetworkInterface[]>("GET", `/nodes/${node}/lxc/${vmid}/interfaces`);
+  }
+
+  // LXC Creation operations
+
+  /**
+   * Get the next available VMID from the cluster
+   */
+  async getNextVMID(): Promise<number> {
+    const result = await this.request<string>("GET", "/cluster/nextid");
+    return parseInt(result, 10);
+  }
+
+  /**
+   * Get local templates stored on a specific storage
+   */
+  async getTemplates(node: string, storage: string): Promise<StorageContent[]> {
+    const contents = await this.request<StorageContent[]>(
+      "GET",
+      `/nodes/${node}/storage/${storage}/content?content=vztmpl`
+    );
+    return contents.filter((c) => c.content === "vztmpl");
+  }
+
+  /**
+   * Get all local templates from all storages on a node
+   */
+  async getAllTemplates(node: string): Promise<StorageContent[]> {
+    const storages = await this.request<Storage[]>("GET", `/nodes/${node}/storage`);
+    const templateStorages = storages.filter(
+      (s) => s.content.includes("vztmpl") && s.active === 1
+    );
+
+    const templatePromises = templateStorages.map((s) =>
+      this.getTemplates(node, s.storage).catch(() => [] as StorageContent[])
+    );
+
+    const results = await Promise.all(templatePromises);
+    return results.flat();
+  }
+
+  /**
+   * Get available templates from Proxmox repository (aplinfo)
+   */
+  async getAvailableTemplates(node: string): Promise<AvailableTemplate[]> {
+    return this.request<AvailableTemplate[]>("GET", `/nodes/${node}/aplinfo`);
+  }
+
+  /**
+   * Download a template from the Proxmox repository
+   * Returns a task UPID to track progress
+   */
+  async downloadTemplate(
+    node: string,
+    storage: string,
+    template: string
+  ): Promise<string> {
+    return this.request<string>("POST", `/nodes/${node}/aplinfo`, {
+      storage,
+      template,
+    });
+  }
+
+  /**
+   * Get storages that can hold container templates
+   */
+  async getTemplateStorages(node: string): Promise<Storage[]> {
+    const storages = await this.request<Storage[]>("GET", `/nodes/${node}/storage`);
+    return storages.filter(
+      (s) => s.content.includes("vztmpl") && s.active === 1 && s.enabled === 1
+    );
+  }
+
+  /**
+   * Get storages that can hold container root filesystems
+   */
+  async getRootfsStorages(node: string): Promise<Storage[]> {
+    const storages = await this.request<Storage[]>("GET", `/nodes/${node}/storage`);
+    return storages.filter(
+      (s) => s.content.includes("rootdir") && s.active === 1 && s.enabled === 1
+    );
+  }
+
+  /**
+   * Get network bridges available on a node
+   */
+  async getNetworkBridges(node: string): Promise<{ iface: string; type: string; active: number }[]> {
+    const networks = await this.request<{ iface: string; type: string; active: number }[]>(
+      "GET",
+      `/nodes/${node}/network`
+    );
+    return networks.filter((n) => n.type === "bridge" && n.active === 1);
+  }
+
+  /**
+   * Create a new LXC container
+   * Returns a task UPID to track progress
+   */
+  async createContainer(node: string, config: LXCCreateConfig): Promise<string> {
+    // Convert boolean values to 0/1 for Proxmox API
+    const apiConfig: Record<string, unknown> = {
+      vmid: config.vmid,
+      hostname: config.hostname,
+      ostemplate: config.ostemplate,
+      rootfs: config.rootfs,
+    };
+
+    if (config.password) {
+      apiConfig.password = config.password;
+    }
+    if (config["ssh-public-keys"]) {
+      apiConfig["ssh-public-keys"] = config["ssh-public-keys"];
+    }
+    if (config.cores !== undefined) {
+      apiConfig.cores = config.cores;
+    }
+    if (config.memory !== undefined) {
+      apiConfig.memory = config.memory;
+    }
+    if (config.swap !== undefined) {
+      apiConfig.swap = config.swap;
+    }
+    if (config.net0) {
+      apiConfig.net0 = config.net0;
+    }
+    if (config.nameserver) {
+      apiConfig.nameserver = config.nameserver;
+    }
+    if (config.searchdomain) {
+      apiConfig.searchdomain = config.searchdomain;
+    }
+    if (config.unprivileged !== undefined) {
+      apiConfig.unprivileged = config.unprivileged ? 1 : 0;
+    }
+    if (config.start !== undefined) {
+      apiConfig.start = config.start ? 1 : 0;
+    }
+    if (config.features) {
+      apiConfig.features = config.features;
+    }
+    if (config.onboot !== undefined) {
+      apiConfig.onboot = config.onboot ? 1 : 0;
+    }
+
+    return this.request<string>("POST", `/nodes/${node}/lxc`, apiConfig);
   }
 
   // Storage operations

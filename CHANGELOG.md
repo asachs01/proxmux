@@ -8,6 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- LXC container creation wizard with multi-step form (press 'c' from Containers view)
+  - Basic configuration: Node selection, VMID (with next-available), Hostname
+  - Template selection with local templates and download from Proxmox repository
+  - Authentication: Root password, SSH public key
+  - Resources: CPU cores, Memory, Swap
+  - Storage: Root disk storage and size configuration
+  - Network: Bridge selection, DHCP/static IP, DNS settings
+  - Options: Unprivileged mode, start after creation, nesting, start on boot
+- API client methods for LXC creation:
+  - `getNextVMID()` - Get next available VMID
+  - `getTemplates()` - List local container templates
+  - `getAllTemplates()` - List templates from all storages
+  - `getAvailableTemplates()` - List downloadable templates from Proxmox repository
+  - `downloadTemplate()` - Download template from repository
+  - `getTemplateStorages()` - Get storages supporting container templates
+  - `getRootfsStorages()` - Get storages supporting container root filesystems
+  - `getNetworkBridges()` - Get available network bridges
+  - `createContainer()` - Create new LXC container
 - Homebrew formula for easy installation on macOS/Linux (`brew tap asachs01/proxmux && brew install proxmux`)
 - Quick install script (`curl -fsSL .../install.sh | bash`)
 - GitHub Actions workflow for automated binary releases
