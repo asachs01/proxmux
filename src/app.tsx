@@ -23,6 +23,7 @@ export function App({ config }: AppProps) {
   const [connected, setConnected] = useState(false);
   const [terminalHeight, setTerminalHeight] = useState(stdout?.rows || 24);
   const [showHelp, setShowHelp] = useState(false);
+  const [formActive, setFormActive] = useState(false);
 
   // Update height when terminal resizes
   useEffect(() => {
@@ -54,14 +55,15 @@ export function App({ config }: AppProps) {
     // Don't process other keys when help is shown
     if (showHelp) return;
 
-    // View switching with Ctrl+number keys (prevents conflict with text input)
-    if (key.ctrl) {
-      const num = parseInt(input);
-      if (num >= 1 && num <= views.length) {
-        const view = views[num - 1];
-        if (view) {
-          setCurrentView(view as View);
-        }
+    // Skip view switching and quit when in a form (allow typing anything)
+    if (formActive) return;
+
+    // View switching with number keys (only when not in a form)
+    const num = parseInt(input);
+    if (num >= 1 && num <= views.length) {
+      const view = views[num - 1];
+      if (view) {
+        setCurrentView(view as View);
       }
     }
 
@@ -80,9 +82,9 @@ export function App({ config }: AppProps) {
       case "dashboard":
         return <Dashboard />;
       case "vms":
-        return <VMs />;
+        return <VMs onFormActiveChange={setFormActive} />;
       case "containers":
-        return <Containers host={config.host} />;
+        return <Containers host={config.host} onFormActiveChange={setFormActive} />;
       case "storage":
         return <Storage />;
       default:

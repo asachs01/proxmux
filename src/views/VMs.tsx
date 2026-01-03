@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
 import { useVMs } from "../hooks/useProxmox.ts";
 import { useKeyboardNavigation } from "../hooks/useKeyboard.ts";
@@ -11,9 +11,18 @@ import type { VM } from "../api/types.ts";
 
 type PendingAction = { type: "stop" | "reboot"; vmid: number; node: string; name: string } | null;
 
-export function VMs() {
+interface VMsProps {
+  onFormActiveChange?: (active: boolean) => void;
+}
+
+export function VMs({ onFormActiveChange }: VMsProps) {
   const [showCreateWizard, setShowCreateWizard] = useState(false);
   const { vms: unsortedVMs, loading, error, refresh, startVM, stopVM, rebootVM } = useVMs();
+
+  // Notify parent when form mode changes
+  useEffect(() => {
+    onFormActiveChange?.(showCreateWizard);
+  }, [showCreateWizard, onFormActiveChange]);
 
   // Sort VMs by ID
   const vms = [...unsortedVMs].sort((a, b) => a.vmid - b.vmid);

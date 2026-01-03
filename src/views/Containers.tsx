@@ -13,6 +13,7 @@ type PendingAction = { type: "stop" | "reboot"; vmid: number; node: string; name
 
 interface ContainersProps {
   host: string;
+  onFormActiveChange?: (active: boolean) => void;
 }
 
 export function Containers({ host }: ContainersProps) {
