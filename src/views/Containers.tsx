@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
 import { spawnSync } from "child_process";
 import { useContainers } from "../hooks/useProxmox.ts";
@@ -14,9 +14,10 @@ type PendingAction = { type: "stop" | "reboot"; vmid: number; node: string; name
 
 interface ContainersProps {
   host: string;
+  onFormActiveChange?: (active: boolean) => void;
 }
 
-export function Containers({ host }: ContainersProps) {
+export function Containers({ host, onFormActiveChange }: ContainersProps) {
   const { containers: unsortedContainers, loading, error, refresh, startContainer, stopContainer, rebootContainer } =
     useContainers();
 
@@ -28,6 +29,11 @@ export function Containers({ host }: ContainersProps) {
   const [selectedContainer, setSelectedContainer] = useState<Container | null>(null);
   const [consoleActive, setConsoleActive] = useState(false);
   const [showCreateWizard, setShowCreateWizard] = useState(false);
+
+  // Notify parent when form mode changes
+  useEffect(() => {
+    onFormActiveChange?.(showCreateWizard);
+  }, [showCreateWizard, onFormActiveChange]);
 
   // Extract hostname from Proxmox URL for SSH
   const proxmoxHost = (() => {
